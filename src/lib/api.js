@@ -34,5 +34,5 @@ export async function apiRequest(path, options = {}) {
 export function getShopifyInstallUrl(shop, host) {
   const params = new URLSearchParams({ shop })
   if (host) params.set('host', host)
-  return `${API_URL}/auth/shopify?${params}`
+  return `${window.location.origin}/auth/shopify?${params}`
 }
