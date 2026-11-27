@@ -290,14 +290,19 @@ function App() {
 
         const productPages = []
         let cursor = null
-        let hasMoreProducts = false
-        for (let page = 0; page < 10; page += 1) {
+        let hasMoreProducts = true
+        while (hasMoreProducts) {
           const query = cursor ? `?after=${encodeURIComponent(cursor)}` : ''
           const result = await apiRequest(`/api/products${query}`)
           productPages.push(...result.products)
           hasMoreProducts = result.pageInfo.hasNextPage
-          if (!hasMoreProducts) break
-          cursor = result.pageInfo.endCursor
+          if (hasMoreProducts) {
+            const nextCursor = result.pageInfo.endCursor
+            if (!nextCursor || nextCursor === cursor) {
+              throw new Error('Shopify product pagination did not return a valid next page. Please try again.')
+            }
+            cursor = nextCursor
+          }
         }
         const [quoteResult, settingsResult] = await Promise.all([
           apiRequest('/api/quotes'),
@@ -308,7 +313,6 @@ function App() {
         setQuotes(quoteResult.quotes)
         setQuoteTotal(quoteResult.total)
         setSettings(settingsResult.settings)
-        if (hasMoreProducts) setErrorMessage('Showing the first 500 products. Use Shopify Admin to manage the rest.')
       } catch (error) {
         if (!active) return
         if (error.status === 401) {
